@@ -11,7 +11,7 @@ import SwiftUI
 struct JogTrackApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            HealthKitView(totalTime: 200)
         }
     }
 }

@@ -12,6 +12,7 @@ import HealthKit
 class HealthKitManager: ObservableObject {
     private let healthStore = HKHealthStore()
     @Published var latestBPM: Double?
+    private var heartRateQuery: HKAnchoredObjectQuery?
 
     init() {
         requestAuthorization()
@@ -48,6 +49,53 @@ class HealthKitManager: ObservableObject {
         }
 
         healthStore.execute(query)
+    }
+    
+    func startRealTimeHeartRateMonitoring() {
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else { return }
+        
+        // Stop any existing query
+        if let existingQuery = heartRateQuery {
+            healthStore.stop(existingQuery)
+        }
+        
+        // Create anchored query for real-time updates
+        heartRateQuery = HKAnchoredObjectQuery(
+            type: heartRateType,
+            predicate: nil,
+            anchor: nil,
+            limit: HKObjectQueryNoLimit
+        ) { [weak self] _, samples, _, _, _ in
+            guard let self = self,
+                  let samples = samples,
+                  let latestSample = samples.last as? HKQuantitySample else { return }
+            
+            DispatchQueue.main.async {
+                self.latestBPM = latestSample.quantity.doubleValue(for: HKUnit(from: "count/min"))
+            }
+        }
+        
+        // Set update handler for real-time updates
+        heartRateQuery?.updateHandler = { [weak self] _, samples, _, _, _ in
+            guard let self = self,
+                  let samples = samples,
+                  let latestSample = samples.last as? HKQuantitySample else { return }
+            
+            DispatchQueue.main.async {
+                self.latestBPM = latestSample.quantity.doubleValue(for: HKUnit(from: "count/min"))
+            }
+        }
+        
+        if let query = heartRateQuery {
+            healthStore.execute(query)
+        }
+    }
+    
+    func stopRealTimeHeartRateMonitoring() {
+        if let query = heartRateQuery {
+            healthStore.stop(query)
+            heartRateQuery = nil
+        }
     }
 }
 
