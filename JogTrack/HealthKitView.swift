@@ -8,14 +8,8 @@
 import SwiftUI
 import HealthKit
 
-var heartRateQuery: HKAnchoredObjectQuery?
-
 func formatTime(duration: Int) -> String {
     return "\(String(format: "%02d", duration / 60)):\(String(format: "%02d", duration % 60))"
-}
-
-func handleFinishExercise() {
-    
 }
 
 struct HealthKitView: View {
@@ -31,6 +25,16 @@ struct HealthKitView: View {
     let activeTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     let totalTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     let BPMTimer = Timer.publish(every: 5, on: .main, in: .common).autoconnect()
+    
+    func handleFinishExercise() {
+//        isPaused = true
+//        activeTimer.
+    }
+
+    func handlePauseExercise() {
+        
+    }
+
     
 
     init(totalTime: Int) {
@@ -85,7 +89,7 @@ struct HealthKitView: View {
             
             VStack {
                 Button ("Pause") {
-                    isPaused = true
+                    handlePauseExercise()
                 }
                 
                 Button ("End") {
@@ -93,25 +97,26 @@ struct HealthKitView: View {
                 }
             }
         }
-        .onReceive(activeTimer) { _ in
-            guard activeTimeRemaining > 0 else { return }
-            // TODO: get real BPM treshold
-            let BPMTreshold = 90.0
-            
-            isBPMUnder = BPMNow < BPMTreshold
-
-            if(BPMNow < BPMTreshold){
-                activeTimeRemaining -= 1
-            }
-            progress = CGFloat(activeTimeRemaining) / CGFloat(totalTime)
-        }
-        .onReceive(totalTimer) { _ in
-            timeRecorded += 1
-        }
         .onReceive(BPMTimer) { _ in
             // TODO: change to a real HealthKit provider
             BPMNow = Double.random(in: 60...120)
+            
+            // TODO: get real BPM treshold
+            let BPMTreshold = 90.0
+            isBPMUnder = BPMNow < BPMTreshold
             print("BPM Now: \(BPMNow), captured on: \(activeTimeRemaining)")
+        }
+        .onReceive(activeTimer) { _ in
+            guard activeTimeRemaining > 0 else { return }
+            
+            timeRecorded += 1
+            
+
+            if(!isBPMUnder){
+                activeTimeRemaining -= 1
+            }
+            progress = CGFloat(activeTimeRemaining) / CGFloat(totalTime)
+            
         }
     }
 }
