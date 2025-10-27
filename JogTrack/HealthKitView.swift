@@ -13,7 +13,7 @@ func formatTime(duration: Int) -> String {
 }
 
 struct HealthKitView: View {
-//    @StateObject private var healthKitManager = HealthKitManager()
+    @StateObject private var healthKitManager = HealthKitManager()
     @State private var progress: CGFloat = 1.0
     @State private var activeTimeRemaining: Int
     @State private var timeRecorded: Int = 0
